@@ -19,7 +19,7 @@ jobs:
             install-dependency: yum install -y python3 which
           - label: el8
             container: centos:8
-            install-dependency: dnf install -y python3 which
+            install-dependency: dnf install -y python3 rsync which
     
     container:
       image: ${{ matrix.container }}
