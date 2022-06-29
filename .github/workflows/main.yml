@@ -11,12 +11,12 @@ jobs:
       fail-fast: false
       matrix:
         label:
-       #   - el7
+          - el7
           - el8
         include:
-      #    - label: el7
-      #      container: centos:7
-      #      install-dependency: yum install -y python3 which
+          - label: el7
+            container: centos:7
+            install-dependency: yum install -y python3 which
           - label: el8
             container: centos:8
             install-dependency: dnf install -y python3 which
@@ -28,6 +28,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Some hacks for CentOS 8 (EOL) to work again.
+        if: ${{ matrix.label == 'el8' }}
         run: |
           sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*
           sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*
@@ -35,7 +36,8 @@ jobs:
           yum clean all && yum makecache
           yum distro-sync -y --allowerasing
           
-      - name: Extra repos for CentOS and Rocky Linux
+      - name: Extra repos for CentOS8
+        if: ${{ matrix.label == 'el8' }}
         run: |
          echo '[ltb-project]'                                              >  /etc/yum.repos.d/ltb-project.repo
          echo 'name=LTB project packages'                                  >> /etc/yum.repos.d/ltb-project.repo
@@ -46,7 +48,8 @@ jobs:
          rpm --import https://www.ltb-project.org/documentation/_static/RPM-GPG-KEY-LTB-project
          yum install -y epel-release
 
-      - name: Enable PowerTools on Rocky 8 and CentOS 8.
+      - name: Enable PowerTools on CentOS 8.
+        if: ${{ matrix.label == 'el8' }}
         run: |
           yum install -y yum-utils
           yum config-manager --enable PowerTools || :
@@ -56,7 +59,10 @@ jobs:
         run: ${{ matrix.install-dependency }}
    
       - name: Fix CentOS8 dependencies
-        run: sed -i 's/python-devel/python3-devel/g' ./pybuild/build_barrele.py
+        if: ${{ matrix.label == 'el8' }}
+        run: |
+          sed -i 's/python-devel/python36-devel/g' ./pybuild/build_barrele.py
+          sed -i 's/postgresql-devel/libpq-devel/g' ./pybuild/build_barrele.py
              
       - name: Coral Build
         run: ./coral build --debug=True
