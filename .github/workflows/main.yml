@@ -56,7 +56,9 @@ jobs:
         run: ${{ matrix.install-dependency }}
    
       - name: Coral Build
-        run: ./coral build --debug=True
+        run: sed -i 's/python-devel/python3-devel/g' ./pybuild/build_barrele.py
+             ./coral build --debug=True
+             
 
       - name: Upload artifacts
         uses: actions/upload-artifact@master
