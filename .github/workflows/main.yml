@@ -11,20 +11,24 @@ jobs:
       fail-fast: false
       matrix:
         label:
+       #   - el7
           - el8
         include:
+      #    - label: el7
+      #      container: centos:7
+      #      install-dependency: yum install -y python3 which
           - label: el8
             container: centos:8
             install-dependency: dnf install -y python3 which
     
-        container:
-          - centos:centos8
+    container:
+      image: ${{ matrix.container }}
     
     steps:
       - uses: actions/checkout@v3
 
       - name: Install dependencies
-        run: dnf install -y python3 which
+        run: ${{ matrix.install-dependency }}
       - name: Coral Build
         run: ./coral build --debug=True
 
