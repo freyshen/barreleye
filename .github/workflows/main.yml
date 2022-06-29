@@ -64,7 +64,7 @@ jobs:
           sed -i 's/python-devel/python36-devel/g' ./pybuild/build_barrele.py
           sed -i 's/postgresql-devel/libpq-devel/g' ./pybuild/build_barrele.py
           sed -i 's/createrepo/createrepo_c/g' ./pybuild/coral_build.py
-          sed -i 's/package_dict, build_pip_dir/build_pip_dir/g' ./pybuild/coral_build.py
+          sed -i 's/package_dict,//g' ./pybuild/coral_build.py
           
                        
       - name: Coral Build
