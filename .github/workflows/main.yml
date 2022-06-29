@@ -27,8 +27,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: ${{ matrix.install-dependency }}
+   #   - name: Install dependencies
+   #     run: ${{ matrix.install-dependency }}
       - name: Coral Build
         run: ./coral build --debug=True
 
