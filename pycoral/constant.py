@@ -86,6 +86,7 @@ CORAL_DEPENDENT_RPMS = ["git",  # For build anything from Git repository
                         "kexec-tools",  # In case of kernel crash
                         "linux-firmware",  # Needed by Lustre Linux kernel.
                         "lsof",  # Needed by Lustre test scriot.
+                        "net-snmp-utils",  # needed by HA
                         "net-snmp-libs",  # needed by Lustre RPM
                         "net-snmp-agent-libs",  # needed by Lustre RPM
                         "net-tools",  # netstat is needed by Lustre test RPM
