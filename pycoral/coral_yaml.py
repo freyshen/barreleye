@@ -15,7 +15,7 @@ class YamlDumper(yaml.Dumper):
         return super().increase_indent(flow, False)
 
 
-def write_yaml_config(log, prefix, config, config_fpath):
+def write_yaml_file(log, prefix, config, config_fpath):
     """
     Write YAML file
     """
@@ -46,7 +46,7 @@ def read_yaml_file(log, fpath):
                      traceback.format_exc())
         return None
     try:
-        yaml_content = yaml.load(file_data)
+        yaml_content = yaml.load(file_data, Loader=yaml.FullLoader)
     except:
         log.cl_error("failed to load file [%s] as YAML format on "
                      "host [%s]: %s",

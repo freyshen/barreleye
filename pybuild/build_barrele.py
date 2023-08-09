@@ -3,6 +3,7 @@ Library for building Barreleye
 """
 import os
 import stat
+from pycoral import constant
 from pycoral import ssh_host
 from pycoral import clog
 from pycoral import cmd_general
@@ -60,44 +61,47 @@ GRAFANA_PIECHART_PANEL_URL = ("https://github.com/grafana/piechart-panel/"
 # GRAFANA_PIECHART_PANEL_URL
 GRAFANA_PIECHART_PANEL_SHA1SUM = "2b3c33afd865af4575d87a83e3d45e61acf8273a"
 PACAKGE_URL_DICT["grafana_piechart_panel"] = GRAFANA_PIECHART_PANEL_URL
-# RPMs needed by building collectd
-COLLECTD_BUILD_DEPENDENT_RPMS = ["libcurl-devel",
-                                 "ganglia-devel",
-                                 "gtk2-devel",
-                                 "iptables-devel",
-                                 "iproute-devel",
-                                 "libatasmart-devel",
-                                 "libdbi-devel",
-                                 "libcap-devel",
-                                 "libesmtp-devel",
-                                 "libgcrypt-devel",
-                                 "libmemcached-devel",
-                                 "libmicrohttpd-devel",
-                                 "libmnl-devel",
-                                 "libnotify-devel",
-                                 "libpcap-devel",
-                                 "libssh2-devel",
-                                 "libxml2-devel",
-                                 "libvirt-devel",
-                                 "lm_sensors-devel",
-                                 "lua-devel",
-                                 "mosquitto-devel",
-                                 "net-snmp-devel",
-                                 "OpenIPMI-devel",
-                                 "openldap-devel",
-                                 "perl-ExtUtils-Embed",
-                                 "postgresql-devel",
-                                 "python-devel",
-                                 "qpid-proton-c-devel",
-                                 "riemann-c-client-devel",
-                                 "rrdtool-devel",
-                                 "systemd-devel",  # libudev.h
-                                 "uthash-devel",
-                                 "xfsprogs-devel",
-                                 "yajl-devel",
-                                 "zeromq-devel"]
+# RPMs needed by building collectd, both for RHEL7 and RHEL8
+COLLECTD_BUILD_DEPENDENT_COMMON_RPMS = ["libcurl-devel",
+                                        "ganglia-devel",
+                                        "gtk2-devel",
+                                        "iptables-devel",
+                                        "iproute-devel",
+                                        "libatasmart-devel",
+                                        "libdbi-devel",
+                                        "libcap-devel",
+                                        "libesmtp-devel",
+                                        "libgcrypt-devel",
+                                        "libmemcached-devel",
+                                        "libmicrohttpd-devel",
+                                        "libmnl-devel",
+                                        "libnotify-devel",
+                                        "libpcap-devel",
+                                        "libssh2-devel",
+                                        "libxml2-devel",
+                                        "libvirt-devel",
+                                        "lm_sensors-devel",
+                                        "lua-devel",
+                                        "mosquitto-devel",
+                                        "net-snmp-devel",
+                                        "OpenIPMI-devel",
+                                        "openldap-devel",
+                                        "perl-ExtUtils-Embed",
+                                        "qpid-proton-c-devel",
+                                        "riemann-c-client-devel",
+                                        "rrdtool-devel",
+                                        "systemd-devel",  # libudev.h
+                                        "uthash-devel",
+                                        "xfsprogs-devel",
+                                        "yajl-devel",
+                                        "zeromq-devel"]
+
 # RPMs needed by building barreleye
-BARRELEYE_BUILD_DEPENDENT_RPMS = COLLECTD_BUILD_DEPENDENT_RPMS
+BARRELEYE_BUILD_DEPENDENT_COMMON_RPMS = COLLECTD_BUILD_DEPENDENT_COMMON_RPMS
+COLLECTD_BUILD_DEPENDENT_RHEL7_RPMS = (BARRELEYE_BUILD_DEPENDENT_COMMON_RPMS +
+                                       ["postgresql-devel", "python-devel"])
+COLLECTD_BUILD_DEPENDENT_RHEL8_RPMS = (BARRELEYE_BUILD_DEPENDENT_COMMON_RPMS +
+                                       ["libpq-devel", "python36-devel"])
 BARRELEYE_BUILD_DEPENDENT_PIPS = ["requests", "python-slugify"]
 
 
@@ -302,7 +306,8 @@ def build_collectd_rpms(log, host, target_cpu, packages_dir,
                 collectd_version, distro_number))
     log.cl_info("running command [%s] on host [%s]",
                 command, host.sh_hostname)
-    retval = host.sh_run(log, command)
+    # This command is time consuming.
+    retval = host.sh_run(log, command, timeout=None)
     if retval.cr_exit_status:
         log.cl_error("failed to run command [%s] on host [%s], "
                      "ret = [%d], stdout = [%s], stderr = [%s]",
@@ -862,7 +867,11 @@ class CoralBarrelePlugin(build_common.CoralPluginType):
         """
         Return the RPMs needed to install before building
         """
-        return BARRELEYE_BUILD_DEPENDENT_RPMS
+        if distro == ssh_host.DISTRO_RHEL7:
+            return COLLECTD_BUILD_DEPENDENT_RHEL7_RPMS
+        if distro == ssh_host.DISTRO_RHEL8:
+            return COLLECTD_BUILD_DEPENDENT_RHEL8_RPMS
+        return None
 
     def cpt_build(self, log, workspace, local_host, source_dir, target_cpu,
                   type_cache, iso_cache, packages_dir, extra_iso_fnames,
@@ -884,7 +893,7 @@ class CoralBarrelePlugin(build_common.CoralPluginType):
 
 class CoralBarreleCommand():
     """
-    Commands to for building Barreleye plugin.
+    Commands to build Collectd.
     """
     # pylint: disable=too-few-public-methods
     def _init(self, log_to_file):
@@ -902,5 +911,79 @@ class CoralBarreleCommand():
         cmd_general.cmd_exit(log, 0)
 
 
+class CoralCollectdCommand():
+    """
+    Commands for building Barreleye plugin.
+    """
+    # pylint: disable=too-few-public-methods
+    def _init(self, log_to_file):
+        # pylint: disable=attribute-defined-outside-init
+        self._ccc_log_to_file = log_to_file
+
+    def build(self, collectd=None):
+        """
+        Build Collectd.
+        :param collectd: The Collectd source codes.
+            Default: https://github.com/LiXi-storage/collectd/releases/$latest.
+            A local source dir or .tar.bz2 generated by "make dist" of Collectd
+            can be specified if modification to Collectd is needed.
+        """
+        # pylint: disable=too-many-locals
+        source_dir = os.getcwd()
+        identity = build_common.get_build_path()
+        logdir_is_default = True
+        log, workspace = cmd_general.init_env_noconfig(source_dir,
+                                                       self._ccc_log_to_file,
+                                                       logdir_is_default,
+                                                       identity=identity)
+        local_host = ssh_host.get_local_host(ssh=False)
+        if collectd is not None:
+            collectd = cmd_general.check_argument_fpath(log, local_host, collectd)
+
+        shared_cache = constant.CORAL_BUILD_CACHE
+        type_fname = constant.CORAL_BUILD_CACHE_TYPE_DEVEL
+        # Shared cache for this build type
+        shared_type_cache = shared_cache + "/" + type_fname
+        type_cache = workspace + "/" + type_fname
+        iso_cache = type_cache + "/" + constant.ISO_CACHE_FNAME
+        # Directory path of package under ISO cache
+        packages_dir = iso_cache + "/" + constant.BUILD_PACKAGES
+        # Extra RPM file names under package directory
+        extra_package_fnames = []
+
+        command = ("mkdir -p %s" % (packages_dir))
+        retval = local_host.sh_run(log, command)
+        if retval.cr_exit_status:
+            log.cl_error("failed to run command [%s] on host [%s], "
+                         "ret = [%d], stdout = [%s], stderr = [%s]",
+                         command,
+                         local_host.sh_hostname,
+                         retval.cr_exit_status,
+                         retval.cr_stdout,
+                         retval.cr_stderr)
+            cmd_general.cmd_exit(log, -1)
+
+        ret = build_common.get_shared_build_cache(log, local_host, workspace,
+                                                  shared_type_cache)
+        if ret:
+            log.cl_error("failed to get shared build cache")
+            cmd_general.cmd_exit(log, -1)
+
+        target_cpu = local_host.sh_target_cpu(log)
+        if target_cpu is None:
+            log.cl_error("failed to get the target cpu on host [%s]",
+                         local_host.sh_hostname)
+            cmd_general.cmd_exit(log, -1)
+
+        rc = build_collectd(log, workspace, local_host, type_cache,
+                            target_cpu, packages_dir, collectd,
+                            extra_package_fnames)
+        if rc:
+            log.cl_error("failed to build Collectd RPMs")
+            cmd_general.cmd_exit(log, -1)
+        cmd_general.cmd_exit(log, 0)
+
+
 build_common.coral_command_register("barrele", CoralBarreleCommand())
+build_common.coral_command_register("collectd", CoralCollectdCommand())
 build_common.coral_plugin_register(CoralBarrelePlugin())
