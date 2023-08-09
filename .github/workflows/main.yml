@@ -58,13 +58,13 @@ jobs:
       - name: Install dependencies
         run: ${{ matrix.install-dependency }}
    
-      - name: Fix CentOS8 dependencies
-        if: ${{ matrix.label == 'el8' }}
-        run: |
-          sed -i 's/python-devel/python36-devel/g' ./pybuild/build_barrele.py
-          sed -i 's/postgresql-devel/libpq-devel/g' ./pybuild/build_barrele.py
-          sed -i 's/createrepo/createrepo_c/g' ./pybuild/coral_build.py
-          sed -i 's/ package_dict, build_pip_dir,/package_dict, build_pip_dir,/g' ./pybuild/coral_build.py
+      # - name: Fix CentOS8 dependencies
+      #   if: ${{ matrix.label == 'el8' }}
+      #   run: |
+      #     sed -i 's/python-devel/python36-devel/g' ./pybuild/build_barrele.py
+      #     sed -i 's/postgresql-devel/libpq-devel/g' ./pybuild/build_barrele.py
+      #     sed -i 's/createrepo/createrepo_c/g' ./pybuild/coral_build.py
+      #     sed -i 's/ package_dict, build_pip_dir,/package_dict, build_pip_dir,/g' ./pybuild/coral_build.py
           
                        
       - name: Coral Build
