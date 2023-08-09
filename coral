@@ -1,7 +1,4 @@
 #!/usr/bin/python3 -u
-import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
 """
 Coral commands
 """
