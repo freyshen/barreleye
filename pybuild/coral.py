@@ -10,8 +10,6 @@ from pycoral import install_common
 from pycoral import ssh_host
 from pycoral import clog
 from pycoral import constant
-reload(sys)
-sys.setdefaultencoding('utf8')
 
 def coral_command_bootstrap(tsinghua_mirror=False):
     """
