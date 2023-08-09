@@ -209,8 +209,8 @@ class CommandJob():
                           "ret = [%d], stdout = [%s], stderr = [%s]",
                           self.cj_command,
                           self.cj_result.cr_exit_status,
-                          self.cj_result.cr_stdout,
-                          self.cj_result.cr_stderr)
+                          self.cj_result.cr_stdout.encode('utf-8'),
+                          self.cj_result.cr_stderr.encode('utf-8'))
 
     def cj_run(self):
         """
@@ -227,8 +227,8 @@ class CommandJob():
                           "ret = [%d], stdout = [%s], stderr = [%s]",
                           self.cj_command,
                           self.cj_result.cr_exit_status,
-                          self.cj_result.cr_stdout,
-                          self.cj_result.cr_stderr)
+                          self.cj_result.cr_stdout.encode('utf-8'),
+                          self.cj_result.cr_stderr.encode('utf-8'))
 
         self.cj_wait_for_command()
         self.cj_post_exit()
