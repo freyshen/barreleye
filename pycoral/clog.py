@@ -472,9 +472,9 @@ class CoralLog():
         if skip_console:
             extra = {CORAL_SKIP_CONSOLE: True}
         record = self.cl_logger.makeRecord(name, level, filename, lineno,
-                                           message, record_args, exc_info,
+                                           message.encode('utf-8').decode('utf-8'), record_args, exc_info,
                                            func, extra)
-        self.cl_logger.handle(record.encode('utf8'))
+        self.cl_logger.handle(record)
 
     def _cl_append_record(self, level, message, is_stdout=False,
                           is_raw_stderr=False):
