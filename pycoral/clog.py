@@ -474,7 +474,7 @@ class CoralLog():
         record = self.cl_logger.makeRecord(name, level, filename, lineno,
                                            message, record_args, exc_info,
                                            func, extra)
-        self.cl_logger.handle(re.sub(u"(\u2018|\u2019)", "'", record))
+        self.cl_logger.handle(record.encode('utf8'))
 
     def _cl_append_record(self, level, message, is_stdout=False,
                           is_raw_stderr=False):
