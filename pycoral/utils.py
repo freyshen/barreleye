@@ -199,9 +199,9 @@ class CommandJob():
         self.cj_subprocess.stderr.close()
         self.cj_stop_time = time.time()
         if self.cj_return_stdout:
-            self.cj_result.cr_stdout = self.cj_stdout_file.getvalue().decode('utf-8')
+            self.cj_result.cr_stdout = self.cj_stdout_file.getvalue().decode()
         if self.cj_return_stderr:
-            self.cj_result.cr_stderr = self.cj_stderr_file.getvalue().decode('utf-8')
+            self.cj_result.cr_stderr = self.cj_stderr_file.getvalue().decode()
         self.cj_result.cr_duration = self.cj_stop_time - self.cj_start_time
         self.cj_result.cr_timeout = self.cj_killed
         if not self.cj_silent:
@@ -227,8 +227,8 @@ class CommandJob():
                           "ret = [%d], stdout = [%s], stderr = [%s]",
                           self.cj_command,
                           self.cj_result.cr_exit_status,
-                          self.cj_result.cr_stdout,
-                          self.cj_result.cr_stderr)
+                          re.sub(u"(\u2018|\u2019)", "'", self.cj_result.cr_stdout),
+                          re.sub(u"(\u2018|\u2019)", "'", self.cj_result.cr_stderr))
 
         self.cj_wait_for_command()
         self.cj_post_exit()
