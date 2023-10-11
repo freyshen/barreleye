@@ -60,6 +60,8 @@ TEMPLATE_DATASOURCE_NAME = "$BARRELEYE_DATASOURCE_NAME"
 GRAFANA_FOLDER_DISABLED = "Disabled"
 # Grafana folders
 GRAFANA_FOLDERS = [GRAFANA_FOLDER_DISABLED]
+# The name of Grafana service
+GRAFANA_SERVICE_NAME = "grafana-server"
 
 
 def sed_replacement_escape(path):
@@ -421,17 +423,16 @@ class BarreleServer():
         Reinstall Grafana
         """
         host = self.bes_server_host
-        service_name = "grafana-server"
-        ret = host.sh_service_restart(log, service_name)
+        ret = host.sh_service_restart(log, GRAFANA_SERVICE_NAME)
         if ret:
             log.cl_error("failed to restart service [%s] on host [%s]",
-                         service_name, host.sh_hostname)
+                         GRAFANA_SERVICE_NAME, host.sh_hostname)
             return -1
 
-        ret = host.sh_service_enable(log, service_name)
+        ret = host.sh_service_enable(log, GRAFANA_SERVICE_NAME)
         if ret:
             log.cl_error("failed to start service [%s] on host [%s]",
-                         service_name, host.sh_hostname)
+                         GRAFANA_SERVICE_NAME, host.sh_hostname)
             return -1
 
         ret = utils.wait_condition(log, self._bes_grafana_try_connect,
@@ -991,7 +992,7 @@ class BarreleServer():
             return -1
         return 0
 
-    def _bes_grafana_user_info(self, log, name):
+    def _bes_grafana_user_info(self, log, login):
         """
         Add viewer user
         """
@@ -1000,19 +1001,19 @@ class BarreleServer():
                    "Accept": "application/json"}
 
         url = self.bes_grafana_admin_url("/api/users/lookup?loginOrEmail=%s" %
-                                         (slugify(name)))
+                                         (slugify(login)))
         try:
             response = requests.get(url, headers=headers)
         except:
-            log.cl_error("not able to get users through [%s]: %s",
+            log.cl_error("failed to get user info through [%s]: %s",
                          url, traceback.format_exc())
             return -1, None
         if response.status_code == HTTPStatus.OK:
             return 1, response.json()
         if response.status_code == HTTPStatus.NOT_FOUND:
             return 0, None
-        log.cl_error("got status [%d] when getting user info from Grafana",
-                     response.status_code)
+        log.cl_error("got status [%d] when getting user info through [%s]",
+                     response.status_code, url)
         return -1, None
 
     def _bes_grafana_user_recreate(self, log, name, email_address, login,
@@ -1021,7 +1022,7 @@ class BarreleServer():
         If user doesn't exist, add the user.
         If user exists, remove it first.
         """
-        ret, json_info = self._bes_grafana_user_info(log, "viewer")
+        ret, json_info = self._bes_grafana_user_info(log, login)
         if ret < 0:
             return -1
         if ret == 1:
@@ -1044,13 +1045,14 @@ class BarreleServer():
         Reinstall Grafana
         """
         host = self.bes_server_host
-        service_name = "grafana-server"
         log.cl_info("restarting and enabling service [%s] on host [%s]",
-                    service_name, host.sh_hostname)
+                    GRAFANA_SERVICE_NAME, host.sh_hostname)
+
+
         ret = self._bes_grafana_service_restart_and_enable(log)
         if ret:
-            log.cl_error("failed to restart or enable service [%s] on "
-                         "host [%s]", service_name,
+            log.cl_error("failed to restart and enable Grafana service on "
+                         "host [%s]",
                          host.sh_hostname)
             return -1
 

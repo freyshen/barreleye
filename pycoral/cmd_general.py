@@ -70,6 +70,9 @@ def check_argument_fpath(log, local_host, fpath):
     elif len(fpath) == 0:
         log.cl_error("empty file path")
         cmd_exit(log, 1)
+    if fpath[0] != '/':
+        cwd = os.getcwd()
+        fpath = cwd + "/" + fpath
     real_path = local_host.sh_real_path(log, fpath)
     if real_path is None:
         log.cl_error("failed to get the real path of [%s]", fpath)
@@ -112,7 +115,7 @@ def init_env_noconfig(logdir, log_to_file, logdir_is_default,
 
     if not isinstance(log_to_file, bool):
         print("ERROR: invalid debug option [%s], should be a bool type" %
-              (log_to_file), file=sys.stderr)
+              str(log_to_file), file=sys.stderr)
         sys.exit(1)
 
     if log_to_file:
@@ -787,9 +790,9 @@ def check_argument_str(log, name, value):
     return value
 
 
-def lustre_release_name_is_valid(value):
+def name_is_valid(value):
     """
-    Check whether Lustre release string is valid.
+    Check a name is valid
     """
     for char in value:
         if char.isalnum() or char in ["_", "@", ".", "-"]:
@@ -798,6 +801,13 @@ def lustre_release_name_is_valid(value):
     if value in (".", ".."):
         return -1
     return 0
+
+
+def lustre_release_name_is_valid(value):
+    """
+    Check whether Lustre release string is valid.
+    """
+    return name_is_valid(value)
 
 
 def check_lustre_release_name(log, name, value):
@@ -816,13 +826,7 @@ def coral_release_name_is_valid(value):
     """
     Check whether Coral release string is valid.
     """
-    for char in value:
-        if char.isalnum() or char in ["_", "."]:
-            continue
-        return -1
-    if value in (".", ".."):
-        return -1
-    return 0
+    return name_is_valid(value)
 
 
 def check_coral_release_name(log, name, value):
